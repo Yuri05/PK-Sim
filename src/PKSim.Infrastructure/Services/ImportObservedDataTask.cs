@@ -6,6 +6,7 @@ using OSPSuite.Assets;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Domain.Data;
 using OSPSuite.Core.Domain.Services;
+using OSPSuite.Core.Domain.Services.ParameterIdentifications;
 using OSPSuite.Core.Domain.UnitSystem;
 using OSPSuite.Core.Events;
 using OSPSuite.Core.Serialization;
@@ -41,12 +42,13 @@ namespace PKSim.Infrastructure.Services
       private readonly IContainer _container;
       private readonly IOSPSuiteXmlSerializerRepository _modelingXmlSerializerRepository;
       private readonly IEventPublisher _eventPublisher;
+      private readonly IParameterIdentificationTask _parameterIdentificationTask;
 
       public ImportObservedDataTask(IDataImporter dataImporter, IExecutionContext executionContext,
          IDimensionRepository dimensionRepository, IBuildingBlockRepository buildingBlockRepository, ISpeciesRepository speciesRepository,
          IDefaultIndividualRetriever defaultIndividualRetriever, IRepresentationInfoRepository representationInfoRepository,
          IObservedDataTask observedDataTask, IParameterChangeUpdater parameterChangeUpdater, IDialogCreator dialogCreator, IContainer container,
-         IOSPSuiteXmlSerializerRepository modelingXmlSerializerRepository, IEventPublisher eventPublisher)
+         IOSPSuiteXmlSerializerRepository modelingXmlSerializerRepository, IEventPublisher eventPublisher, IParameterIdentificationTask parameterIdentificationTask)
       {
          _dataImporter = dataImporter;
          _executionContext = executionContext;
@@ -61,6 +63,7 @@ namespace PKSim.Infrastructure.Services
          _container = container;
          _modelingXmlSerializerRepository = modelingXmlSerializerRepository;
          _eventPublisher = eventPublisher;
+         _parameterIdentificationTask = parameterIdentificationTask;
       }
 
       public void AddObservedDataToProject() => AddObservedDataToProjectForCompound(null);
@@ -87,8 +90,9 @@ namespace PKSim.Infrastructure.Services
 
       public void AddAndReplaceObservedDataFromConfigurationToProject(ImporterConfiguration configuration, IEnumerable<DataRepository> observedDataFromSameFile)
       {
+         var lstObservedDataFromSameFile = observedDataFromSameFile.ToList();
          var importedObservedData = getObservedDataFromImporter(configuration, null, false, false);
-         var reloadDataSets = _dataImporter.CalculateReloadDataSetsFromConfiguration(importedObservedData.ToList(), observedDataFromSameFile.ToList());
+         var reloadDataSets = _dataImporter.CalculateReloadDataSetsFromConfiguration(importedObservedData.ToList(), lstObservedDataFromSameFile);
 
          if (reloadDataSets == null) return;
 
@@ -104,10 +108,11 @@ namespace PKSim.Infrastructure.Services
             _observedDataTask.Delete(dataSet);
          }
 
+         
          foreach (var dataSet in reloadDataSets.OverwrittenDataSets)
          {
             //TODO this here should be tested
-            var existingDataSet = findDataRepositoryInList(observedDataFromSameFile, dataSet);
+            var existingDataSet = findDataRepositoryInList(lstObservedDataFromSameFile, dataSet);
 
             foreach (var column in dataSet.Columns)
             {
@@ -133,7 +138,11 @@ namespace PKSim.Infrastructure.Services
                }
             }
 
-            _eventPublisher.PublishEvent(new ObservedDataValueChangedEvent(existingDataSet));
+            _parameterIdentificationTask.UpdateParameterIdentificationsUsing(lstObservedDataFromSameFile);
+            foreach (var dataset in lstObservedDataFromSameFile)
+            {
+               _eventPublisher.PublishEvent(new ObservedDataValueChangedEvent(dataset));
+            }
          }
       }
 
