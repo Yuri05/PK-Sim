@@ -31,7 +31,6 @@ namespace PKSim.Infrastructure.Services
    {
       private readonly IDataImporter _dataImporter;
       private readonly IExecutionContext _executionContext;
-      private readonly IDimensionRepository _dimensionRepository;
       private readonly IBuildingBlockRepository _buildingBlockRepository;
       private readonly ISpeciesRepository _speciesRepository;
       private readonly IDefaultIndividualRetriever _defaultIndividualRetriever;
@@ -45,14 +44,13 @@ namespace PKSim.Infrastructure.Services
       private readonly IParameterIdentificationTask _parameterIdentificationTask;
 
       public ImportObservedDataTask(IDataImporter dataImporter, IExecutionContext executionContext,
-         IDimensionRepository dimensionRepository, IBuildingBlockRepository buildingBlockRepository, ISpeciesRepository speciesRepository,
+         IBuildingBlockRepository buildingBlockRepository, ISpeciesRepository speciesRepository,
          IDefaultIndividualRetriever defaultIndividualRetriever, IRepresentationInfoRepository representationInfoRepository,
          IObservedDataTask observedDataTask, IParameterChangeUpdater parameterChangeUpdater, IDialogCreator dialogCreator, IContainer container,
          IOSPSuiteXmlSerializerRepository modelingXmlSerializerRepository, IEventPublisher eventPublisher, IParameterIdentificationTask parameterIdentificationTask)
       {
          _dataImporter = dataImporter;
          _executionContext = executionContext;
-         _dimensionRepository = dimensionRepository;
          _buildingBlockRepository = buildingBlockRepository;
          _speciesRepository = speciesRepository;
          _defaultIndividualRetriever = defaultIndividualRetriever;
