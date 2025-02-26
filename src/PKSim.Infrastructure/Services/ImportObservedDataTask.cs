@@ -7,7 +7,6 @@ using OSPSuite.Core.Domain;
 using OSPSuite.Core.Domain.Data;
 using OSPSuite.Core.Domain.Services;
 using OSPSuite.Core.Domain.Services.ParameterIdentifications;
-using OSPSuite.Core.Domain.UnitSystem;
 using OSPSuite.Core.Events;
 using OSPSuite.Core.Serialization;
 using OSPSuite.Core.Serialization.Xml;
@@ -106,7 +105,7 @@ namespace PKSim.Infrastructure.Services
             _observedDataTask.Delete(dataSet);
          }
 
-         
+
          foreach (var dataSet in reloadDataSets.OverwrittenDataSets)
          {
             //TODO this here should be tested
@@ -215,7 +214,7 @@ namespace PKSim.Infrastructure.Services
       {
          var dataImporterSettings = new DataImporterSettings
          {
-            Caption = $"{CoreConstants.ProductDisplayName} - {PKSimConstants.UI.ImportObservedData}", 
+            Caption = $"{CoreConstants.ProductDisplayName} - {PKSimConstants.UI.ImportObservedData}",
             IconName = ApplicationIcons.ObservedData.IconName,
             // CheckMolWeightAgainstMolecule = true
          };
@@ -245,9 +244,8 @@ namespace PKSim.Infrastructure.Services
          return importedObservedData;
       }
 
-      private void addObservedData( Compound compound = null, bool allowCompoundNameEdit = false)
+      private void addObservedData(Compound compound = null, bool allowCompoundNameEdit = false)
       {
-
          var (metaDataCategories, dataImporterSettings) = initializeSettings(compound, allowCompoundNameEdit);
          var (dataRepositories, configuration) = _dataImporter.ImportDataSets(
             metaDataCategories,
@@ -286,8 +284,6 @@ namespace PKSim.Infrastructure.Services
          baseGrid.QuantityInfo = new QuantityInfo(new[] { observedData.Name, baseGridName }, QuantityType.Time);
       }
 
-
-
       private void adjustMolWeight(DataRepository observedData)
       {
          _parameterChangeUpdater.UpdateMolWeightIn(observedData);
@@ -316,10 +312,10 @@ namespace PKSim.Infrastructure.Services
       public IReadOnlyList<string> DefaultMetaDataCategories { get; } = CoreConstants.ObservedData.DefaultProperties;
 
       public IReadOnlyList<string> ReadOnlyMetaDataCategories { get; } = new List<string> { };
-    
+
       public bool MolWeightAlwaysEditable { get; } = false;
 
-      public bool MolWeightVisible { get; }=  true;
+      public bool MolWeightVisible { get; } = true;
 
       private IEnumerable<string> predefinedGenders => predefinedValuesFor(addPredefinedGenderValues);
 
