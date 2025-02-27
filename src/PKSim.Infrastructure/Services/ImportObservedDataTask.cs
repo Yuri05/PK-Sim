@@ -85,11 +85,10 @@ namespace PKSim.Infrastructure.Services
          }
       }
 
-      public void AddAndReplaceObservedDataFromConfigurationToProject(ImporterConfiguration configuration, IEnumerable<DataRepository> observedDataFromSameFile)
+      public void AddAndReplaceObservedDataFromConfigurationToProject(ImporterConfiguration configuration, IReadOnlyList<DataRepository> observedDataFromSameFile)
       {
-         var lstObservedDataFromSameFile = observedDataFromSameFile.ToList();
          var importedObservedData = getObservedDataFromImporter(configuration, null, false, false);
-         var reloadDataSets = _dataImporter.CalculateReloadDataSetsFromConfiguration(importedObservedData.ToList(), lstObservedDataFromSameFile);
+         var reloadDataSets = _dataImporter.CalculateReloadDataSetsFromConfiguration(importedObservedData.ToList(), observedDataFromSameFile);
 
          if (reloadDataSets == null) return;
 
@@ -109,7 +108,7 @@ namespace PKSim.Infrastructure.Services
          foreach (var dataSet in reloadDataSets.OverwrittenDataSets)
          {
             //TODO this here should be tested
-            var existingDataSet = findDataRepositoryInList(lstObservedDataFromSameFile, dataSet);
+            var existingDataSet = findDataRepositoryInList(observedDataFromSameFile, dataSet);
 
             foreach (var column in dataSet.Columns)
             {
@@ -135,8 +134,8 @@ namespace PKSim.Infrastructure.Services
                }
             }
 
-            _parameterIdentificationTask.UpdateParameterIdentificationsUsing(lstObservedDataFromSameFile);
-            foreach (var dataset in lstObservedDataFromSameFile)
+            _parameterIdentificationTask.UpdateParameterIdentificationsUsing(observedDataFromSameFile);
+            foreach (var dataset in observedDataFromSameFile)
             {
                _eventPublisher.PublishEvent(new ObservedDataValueChangedEvent(dataset));
             }
