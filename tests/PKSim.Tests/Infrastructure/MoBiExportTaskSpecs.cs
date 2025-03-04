@@ -28,7 +28,6 @@ namespace PKSim.Infrastructure
       protected IPKSimConfiguration _configuration;
       protected ILazyLoadTask _lazyLoadTask;
       protected IDialogCreator _dialogCreator;
-      protected ICoreCalculationMethodRepository _coreCalculationMethodRepository;
       protected ISimulationPersistor _simulationPersistor;
       protected IProjectRetriever _projectRetriever;
       protected IObjectIdResetter _objectIdResetter;
