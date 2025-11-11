@@ -3151,7 +3151,7 @@ INSERT INTO tab_calculation_method_rates VALUES('DiffusionPlasma_PKSim','PARAM_P
 INSERT INTO tab_calculation_method_rates VALUES('DiffusionPlasma_PKSim','PARAM_P_endothelial_Brain','P/2','Velocity');
 INSERT INTO tab_calculation_method_rates VALUES('DistributionCommon_PKSim','One_Rate','1','Dimensionless');
 INSERT INTO tab_calculation_method_rates VALUES('DistributionCommon_PKSim','PARAM_K_wat_cell','fu/K_cell_pls','Dimensionless');
-INSERT INTO tab_calculation_method_rates VALUES('DistributionCommon_PKSim','PARAM_K_Water_BC','K_rbc/fu','Dimensionless');
+INSERT INTO tab_calculation_method_rates VALUES('DistributionCommon_PKSim','PARAM_K_Water_BC','fu/K_rbc','Dimensionless');
 INSERT INTO tab_calculation_method_rates VALUES('DistributionCommon_PKSim','PARAM_K_water_cell_Kidney','K_water_cell','Dimensionless');
 INSERT INTO tab_calculation_method_rates VALUES('DistributionCommon_PKSim','PARAM_K_Water_PLS','fu','Dimensionless');
 INSERT INTO tab_calculation_method_rates VALUES('DistributionInVitro_PKSim','Binding partner albumin','1','Dimensionless');
