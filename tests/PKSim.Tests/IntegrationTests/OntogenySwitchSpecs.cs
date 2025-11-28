@@ -77,15 +77,13 @@ namespace PKSim.IntegrationTests
          var cyp3a4Ontogeny = _ontogenyRepository.All().FindByName("CYP3A4");
          _expressionProfile.Molecule.Ontogeny = cyp3a4Ontogeny;
          
-         // First sync the expression profile change to the individual
+         // Sync the expression profile change to the individual
          _expressionProfileUpdater.SynchroniseSimulationSubjectWithExpressionProfile(_individual, _expressionProfile);
 
          // Update the individual in the simulation from the building block
-         // This synchronizes expression profiles and updates parameters
          sut.UpdateParametersFromBuildingBlockInSimulation(_individual, _simulation);
 
          // Rebuild the simulation model to apply the ontogeny changes
-         // Since ontogeny affects the model structure, we need to rebuild
          DomainFactoryForSpecs.AddModelToSimulation(_simulation);
 
          // Get ontogeny factor after switch (should be between 0.1 and 0.2 for a newborn)
