@@ -88,32 +88,33 @@ namespace PKSim.CLI.Core.Services
 
          // Use parallel processing with controlled concurrency to optimize performance
          // while avoiding resource exhaustion
-         using var semaphore = new SemaphoreSlim(maxParallelism, maxParallelism);
-
-         var exportTasks = nameOfSimulationsToExport.Select(async simulationName =>
+         using (var semaphore = new SemaphoreSlim(maxParallelism, maxParallelism))
          {
-            await semaphore.WaitAsync();
-            try
+            var exportTasks = nameOfSimulationsToExport.Select(async simulationName =>
             {
-               var simulation = project.BuildingBlockByName<Simulation>(simulationName);
-               if (simulation == null)
+               await semaphore.WaitAsync();
+               try
                {
-                  _logger.AddWarning($"Simulation '{simulationName}' was not found in project '{project.Name}'", project.Name);
-                  return null;
+                  var simulation = project.BuildingBlockByName<Simulation>(simulationName);
+                  if (simulation == null)
+                  {
+                     _logger.AddWarning($"Simulation '{simulationName}' was not found in project '{project.Name}'", project.Name);
+                     return null;
+                  }
+
+                  return await ExportSimulation(simulation, exportRunOptions, project);
                }
+               finally
+               {
+                  semaphore.Release();
+               }
+            });
 
-               return await ExportSimulation(simulation, exportRunOptions, project);
-            }
-            finally
-            {
-               semaphore.Release();
-            }
-         });
+            var results = await Task.WhenAll(exportTasks);
 
-         var results = await Task.WhenAll(exportTasks);
-
-         // Filter out null results from missing simulations
-         return results.Where(x => x != null).ToArray();
+            // Filter out null results from missing simulations
+            return results.Where(x => x != null).ToArray();
+         }
       }
 
       public async Task<SimulationMapping> ExportSimulation(Simulation simulation, ExportRunOptions exportRunOptions, PKSimProject project)
