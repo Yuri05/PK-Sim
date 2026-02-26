@@ -21,6 +21,13 @@ namespace PKSim.CLI.Core.RunOptions
       /// </summary>
       public bool ExportAllSimulationsIfListIsEmpty { get; set; } = true;
 
+      /// <summary>
+      /// Maximum number of simulations to export in parallel.
+      /// Default is null, which uses the default value from ExportSimulationRunner.
+      /// Set to 1 for sequential processing (useful for debugging or resource-constrained environments).
+      /// </summary>
+      public int? MaxParallelSimulations { get; set; }
+
       public IBusinessRuleSet Rules { get; } = new BusinessRuleSet();
 
       public string OutputFolder

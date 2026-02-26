@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Domain.Services;
@@ -30,6 +32,12 @@ namespace PKSim.CLI.Core.Services
       private readonly ICoreWorkspace _workspace;
       private readonly ISimulationExporter _simulationExporter;
       private readonly ILazyLoadTask _lazyLoadTask;
+
+      /// <summary>
+      /// Maximum number of simulations to export in parallel.
+      /// Defaults to 4 to balance performance with resource usage.
+      /// </summary>
+      private const int DEFAULT_MAX_PARALLEL_SIMULATIONS = 4;
 
       public ExportSimulationRunner(
          IOSPSuiteLogger logger,
@@ -75,22 +83,37 @@ namespace PKSim.CLI.Core.Services
          if (!nameOfSimulationsToExport.Any() && exportRunOptions.ExportAllSimulationsIfListIsEmpty)
             nameOfSimulationsToExport.AddRange(project.All<Simulation>().AllNames());
 
-         var simulationExports = new List<SimulationMapping>();
+         // Determine the degree of parallelism
+         var maxParallelism = exportRunOptions.MaxParallelSimulations ?? DEFAULT_MAX_PARALLEL_SIMULATIONS;
 
-         //sequential for now
-         foreach (var simulationName in nameOfSimulationsToExport)
+         // Use parallel processing with controlled concurrency to optimize performance
+         // while avoiding resource exhaustion
+         using var semaphore = new SemaphoreSlim(maxParallelism, maxParallelism);
+
+         var exportTasks = nameOfSimulationsToExport.Select(async simulationName =>
          {
-            var simulation = project.BuildingBlockByName<Simulation>(simulationName);
-            if (simulation == null)
+            await semaphore.WaitAsync();
+            try
             {
-               _logger.AddWarning($"Simulation '{simulationName}' was not found in project '{project.Name}'", project.Name);
-               continue;
+               var simulation = project.BuildingBlockByName<Simulation>(simulationName);
+               if (simulation == null)
+               {
+                  _logger.AddWarning($"Simulation '{simulationName}' was not found in project '{project.Name}'", project.Name);
+                  return null;
+               }
+
+               return await ExportSimulation(simulation, exportRunOptions, project);
             }
+            finally
+            {
+               semaphore.Release();
+            }
+         });
 
-            simulationExports.Add((await ExportSimulation(simulation, exportRunOptions, project)));
-         }
+         var results = await Task.WhenAll(exportTasks);
 
-         return simulationExports.ToArray();
+         // Filter out null results from missing simulations
+         return results.Where(x => x != null).ToArray();
       }
 
       public async Task<SimulationMapping> ExportSimulation(Simulation simulation, ExportRunOptions exportRunOptions, PKSimProject project)
