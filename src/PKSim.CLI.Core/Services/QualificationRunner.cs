@@ -116,7 +116,7 @@ namespace PKSim.CLI.Core.Services
 
          var observedDataMappings = await exportAllObservedData(project, config);
 
-         var inputMappings = exportInputs(project, config);
+         var inputMappings = await exportInputs(project, config);
 
          var mapping = new QualificationMapping
          {
@@ -214,19 +214,23 @@ namespace PKSim.CLI.Core.Services
          };
       }
 
-      private InputMapping[] exportInputs(PKSimProject project, QualifcationConfiguration configuration)
+      private async Task<InputMapping[]> exportInputs(PKSimProject project, QualifcationConfiguration configuration)
       {
          if (configuration.Inputs == null)
             return Array.Empty<InputMapping>();
-//            return Task.FromResult(Array.Empty<InputMapping>());
 
          //TODO Enable parallel runs once https://github.com/Open-Systems-Pharmacology/OSPSuite.Utility/issues/26 is fixed
-         //  return Task.WhenAll(configuration.Inputs.Select(x => exportInput(project, configuration, x)));
+         //  return await Task.WhenAll(configuration.Inputs.Select(x => exportInput(project, configuration, x)));
 
-         return configuration.Inputs.Select(x => exportInput(project, configuration, x)).ToArray();
+         var results = new List<InputMapping>();
+         foreach (var input in configuration.Inputs)
+         {
+            results.Add(await exportInput(project, configuration, input));
+         }
+         return results.ToArray();
       }
 
-      private InputMapping exportInput(PKSimProject project, QualifcationConfiguration configuration, Input input)
+      private async Task<InputMapping> exportInput(PKSimProject project, QualifcationConfiguration configuration, Input input)
       {
          var buildingBlock = project.BuildingBlockByName(input.Name, input.Type);
 
@@ -238,8 +242,7 @@ namespace PKSim.CLI.Core.Services
 
          var fileFullPath = Path.Combine(targetFolder, $"{buildingBlockName}{CoreConstants.Filter.MARKDOWN_EXTENSION}");
 
-         // Use wait for now until we can support // run of input
-         _markdownReporterTask.ExportToMarkdown(buildingBlock, fileFullPath, input.SectionLevel).Wait();
+         await _markdownReporterTask.ExportToMarkdown(buildingBlock, fileFullPath, input.SectionLevel);
          _logger.AddDebug($"Input data for {input.Type} '{input.Name}' exported to '{fileFullPath}'", project.Name);
 
          return new InputMapping
