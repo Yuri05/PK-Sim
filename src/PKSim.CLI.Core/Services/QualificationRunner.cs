@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using OSPSuite.Assets;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Domain.Data;
 using OSPSuite.Core.Domain.Services;
@@ -10,7 +14,6 @@ using OSPSuite.Core.Extensions;
 using OSPSuite.Core.Qualification;
 using OSPSuite.Core.Services;
 using OSPSuite.Utility;
-using OSPSuite.Utility.Collections;
 using OSPSuite.Utility.Extensions;
 using OSPSuite.Utility.Validation;
 using PKSim.CLI.Core.RunOptions;
@@ -34,7 +37,7 @@ namespace PKSim.CLI.Core.Services
       private readonly IExportSimulationRunner _exportSimulationRunner;
       private readonly IDataRepositoryExportTask _dataRepositoryExportTask;
       private readonly IMarkdownReporterTask _markdownReporterTask;
-      private readonly Cache<string, Project> _snapshotProjectCache = new Cache<string, Project>();
+      private readonly ConcurrentDictionary<string, Lazy<Task<Project>>> _snapshotProjectCache = new ConcurrentDictionary<string, Lazy<Task<Project>>>();
 
       public QualificationRunner(ISnapshotTask snapshotTask,
          IJsonSerializer jsonSerializer,
@@ -116,7 +119,7 @@ namespace PKSim.CLI.Core.Services
 
          var observedDataMappings = await exportAllObservedData(project, config);
 
-         var inputMappings = exportInputs(project, config);
+         var inputMappings = await exportInputs(project, config);
 
          var mapping = new QualificationMapping
          {
@@ -202,10 +205,14 @@ namespace PKSim.CLI.Core.Services
          var csvFullPath = Path.Combine(observedDataOutputFolder, $"{removeIllegalCharactersFrom}{Constants.Filter.CSV_EXTENSION}");
          var xlsFullPath = Path.Combine(observedDataOutputFolder, $"{removeIllegalCharactersFrom}{Constants.Filter.XLSX_EXTENSION}");
          _logger.AddDebug($"Observed data '{observedData.Name}' exported to '{csvFullPath}'", project.Name);
-         await _dataRepositoryExportTask.ExportToCsvAsync(observedData, csvFullPath);
+         var dataTables = _dataRepositoryExportTask.ToDataTable(observedData);
+         if (dataTables.Count > 1)
+            throw new ArgumentException(Error.ExportToCsvNotSupportedForDifferentBaseGrid);
 
+         var csvTask = Task.Run(() => dataTables[0].ExportToCSV(csvFullPath));
          _logger.AddDebug($"Observed data '{observedData.Name}' exported to '{xlsFullPath}'", project.Name);
-         await _dataRepositoryExportTask.ExportToExcelAsync(observedData, xlsFullPath, launchExcel: false);
+         var excelTask = _dataRepositoryExportTask.ExportToExcelAsync(dataTables, xlsFullPath, launchExcel: false);
+         await Task.WhenAll(csvTask, excelTask);
 
          return new ObservedDataMapping
          {
@@ -214,20 +221,31 @@ namespace PKSim.CLI.Core.Services
          };
       }
 
-      private InputMapping[] exportInputs(PKSimProject project, QualifcationConfiguration configuration)
+      private Task<InputMapping[]> exportInputs(PKSimProject project, QualifcationConfiguration configuration)
       {
          if (configuration.Inputs == null)
-            return Array.Empty<InputMapping>();
-//            return Task.FromResult(Array.Empty<InputMapping>());
+            return Task.FromResult(Array.Empty<InputMapping>());
 
-         //TODO Enable parallel runs once https://github.com/Open-Systems-Pharmacology/OSPSuite.Utility/issues/26 is fixed
-         //  return Task.WhenAll(configuration.Inputs.Select(x => exportInput(project, configuration, x)));
+         var maxConcurrency = Math.Max(1, Environment.ProcessorCount);
+         var tasks = new List<Task<InputMapping>>(configuration.Inputs.Length);
 
-         return configuration.Inputs.Select(x => exportInput(project, configuration, x)).ToArray();
+         using (var semaphore = new SemaphoreSlim(maxConcurrency))
+         {
+            configuration.Inputs.Each(input =>
+            {
+               tasks.Add(exportInput(project, configuration, input, semaphore));
+            });
+
+            return Task.WhenAll(tasks);
+         }
       }
 
-      private InputMapping exportInput(PKSimProject project, QualifcationConfiguration configuration, Input input)
+      private async Task<InputMapping> exportInput(PKSimProject project, QualifcationConfiguration configuration, Input input, SemaphoreSlim semaphore)
       {
+         await semaphore.WaitAsync();
+
+         try
+         {
          var buildingBlock = project.BuildingBlockByName(input.Name, input.Type);
 
          var inputsFolder = configuration.InputsFolder;
@@ -238,8 +256,7 @@ namespace PKSim.CLI.Core.Services
 
          var fileFullPath = Path.Combine(targetFolder, $"{buildingBlockName}{CoreConstants.Filter.MARKDOWN_EXTENSION}");
 
-         // Use wait for now until we can support // run of input
-         _markdownReporterTask.ExportToMarkdown(buildingBlock, fileFullPath, input.SectionLevel).Wait();
+         await _markdownReporterTask.ExportToMarkdown(buildingBlock, fileFullPath, input.SectionLevel);
          _logger.AddDebug($"Input data for {input.Type} '{input.Name}' exported to '{fileFullPath}'", project.Name);
 
          return new InputMapping
@@ -248,6 +265,11 @@ namespace PKSim.CLI.Core.Services
             SectionReference = input.SectionReference,
             Path = relativePath(fileFullPath, configuration.OutputFolder)
          };
+         }
+         finally
+         {
+            semaphore.Release();
+         }
       }
 
       private string createProjectOutputFolder(string outputPath, string projectName)
@@ -315,13 +337,22 @@ namespace PKSim.CLI.Core.Services
 
       private async Task<Project> snapshotProjectFromFile(string snapshotPath)
       {
-         if (!_snapshotProjectCache.Contains(snapshotPath))
-         {
-            var snapshot = await _snapshotTask.LoadSnapshotFromFileAsync<Project>(snapshotPath);
-            _snapshotProjectCache[snapshotPath] = snapshot ?? throw new QualificationRunException(CannotLoadSnapshotFromFile(snapshotPath));
-         }
+         var lazySnapshot = _snapshotProjectCache.GetOrAdd(snapshotPath,
+            path => new Lazy<Task<Project>>(async () =>
+            {
+               var snapshot = await _snapshotTask.LoadSnapshotFromFileAsync<Project>(path);
+               return snapshot ?? throw new QualificationRunException(CannotLoadSnapshotFromFile(path));
+            }));
 
-         return _snapshotProjectCache[snapshotPath];
+         try
+         {
+            return await lazySnapshot.Value;
+         }
+         catch
+         {
+            _snapshotProjectCache.TryRemove(snapshotPath, out _);
+            throw;
+         }
       }
 
       private Simulation simulationFrom(Project snapshotProject, string simulationName)

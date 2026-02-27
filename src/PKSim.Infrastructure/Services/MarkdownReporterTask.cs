@@ -17,10 +17,8 @@ namespace PKSim.Infrastructure.Services
          _markdownBuilderRepository = markdownBuilderRepository;
       }
 
-      public Task ExportToMarkdown(object objectToExport, string file, int? indentationLevel = null)
-      {
-         return Task.Run(() => File.WriteAllText(file, ExportToMarkdownString(objectToExport, indentationLevel)));
-      }
+      public Task ExportToMarkdown(object objectToExport, string file, int? indentationLevel = null) =>
+         File.WriteAllTextAsync(file, ExportToMarkdownString(objectToExport, indentationLevel));
 
       public string ExportToMarkdownString(object objectToExport, int? indentationLevel = null)
       {
