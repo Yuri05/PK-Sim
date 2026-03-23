@@ -76,6 +76,12 @@ task :create_portable_setup, [:product_version, :configuration, :package_name] d
 	FileUtils.copy_entry File.join(src_dir, 'TeXTemplates'), File.join(setup_temp_dir, 'TeXTemplates')
 	FileUtils.copy_entry File.join(src_dir, 'ChartLayouts'), File.join(setup_temp_dir, 'ChartLayouts')
 
+	# Copy runtimes folder (contains native SQLite DLL and other runtime dependencies)
+	runtimes_src = File.join(src_dir, 'runtimes')
+	if Dir.exist?(runtimes_src)
+		FileUtils.copy_entry runtimes_src, File.join(setup_temp_dir, 'runtimes')
+	end
+
 
 	#Files required for setup creation only and that will not be harvested automatically
 	setup_files	 = [
