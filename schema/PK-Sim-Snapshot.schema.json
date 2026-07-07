@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/Open-Systems-Pharmacology/PK-Sim/documentation/PK-Sim-Snapshot.schema.json",
+  "$id": "https://github.com/Open-Systems-Pharmacology/PK-Sim/schema/PK-Sim-Snapshot.schema.json",
   "title": "PK-Sim Project Snapshot",
   "description": "JSON schema for PK-Sim project snapshots (the *.json files exported by PK-Sim). The schema is derived from the snapshot classes in PKSim.Core/Snapshots and the JSON serialization configuration in PKSim.Infrastructure/Serialization/Json. Because null values are omitted during serialization (NullValueHandling.Ignore) and the snapshot format evolves across versions, objects allow additional/legacy properties and only fields marked [Required] in the source code are required.",
   "type": "object",
@@ -1187,6 +1187,7 @@
         "DataInfo": { "$ref": "#/definitions/DataInfo" },
         "Values": {
           "type": "array",
+          "description": "Column values. Legacy observed-data columns may store non-numeric (string) values alongside numbers.",
           "items": { "type": ["number", "string"] }
         },
         "Dimension": { "type": ["string", "null"] },
