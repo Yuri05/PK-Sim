@@ -1,0 +1,943 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/Open-Systems-Pharmacology/PK-Sim/develop/schemas/pksim-snapshot-schema.json",
+  "title": "PK-Sim Snapshot (Project)",
+  "description": "JSON Schema describing the structure of a PK-Sim snapshot file as produced by PKSim.Core.Snapshots and serialized by PKSim.Infrastructure.Serialization.Json. The root of a snapshot file is a Project. Serialization notes: null values are omitted (NullValueHandling.Ignore), enums are written as strings (StringEnumConverter), System.Drawing.Color values are written as hex strings (e.g. '#RRGGBB' or '#AARRGGBB'), and IEnumerable snapshot wrappers (CalculationMethodCache, OutputSchema, OutputSelections) are written as plain JSON arrays.",
+  "$ref": "#/definitions/Project",
+  "definitions": {
+    "Color": {
+      "type": "string",
+      "description": "System.Drawing.Color serialized as hex string, e.g. '#RRGGBB' or '#AARRGGBB'.",
+      "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+    },
+    "FloatValue": {
+      "description": "A floating point value. Non-finite IEEE values are serialized by JSON.NET as strings ('NaN', 'Infinity', '-Infinity').",
+      "oneOf": [
+        { "type": "number" },
+        { "type": "string", "enum": ["NaN", "Infinity", "-Infinity"] }
+      ]
+    },
+    "ValueOrigin": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Id": { "type": "integer" },
+        "Source": { "type": "string" },
+        "Method": { "type": "string" },
+        "Description": { "type": "string" }
+      }
+    },
+    "Parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Value": { "type": ["number", "null"] },
+        "Unit": { "type": "string" },
+        "ValueOrigin": { "$ref": "#/definitions/ValueOrigin" },
+        "TableFormula": { "$ref": "#/definitions/TableFormula" }
+      }
+    },
+    "LocalizedParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Value": { "type": ["number", "null"] },
+        "Unit": { "type": "string" },
+        "ValueOrigin": { "$ref": "#/definitions/ValueOrigin" },
+        "TableFormula": { "$ref": "#/definitions/TableFormula" },
+        "Path": { "type": "string" }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "X": { "type": "number" },
+        "Y": { "type": "number" },
+        "RestartSolver": { "type": "boolean" }
+      }
+    },
+    "DistributionMetaData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Mean": { "type": "number" },
+        "Deviation": { "type": "number" },
+        "Distribution": { "type": "string" }
+      }
+    },
+    "TableFormula": {
+      "type": "object",
+      "description": "TableFormula and its subclass DistributedTableFormula (Percentile and DistributionMetaData only appear for distributed table formulas).",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "XName": { "type": "string" },
+        "XDimension": { "type": "string" },
+        "XUnit": { "type": "string" },
+        "YName": { "type": "string" },
+        "YDimension": { "type": "string" },
+        "YUnit": { "type": "string" },
+        "UseDerivedValues": { "type": "boolean" },
+        "Points": { "type": "array", "items": { "$ref": "#/definitions/Point" } },
+        "Percentile": { "type": "number" },
+        "DistributionMetaData": { "type": "array", "items": { "$ref": "#/definitions/DistributionMetaData" } }
+      }
+    },
+    "Alternative": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "IsDefault": { "type": ["boolean", "null"] },
+        "Species": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      }
+    },
+    "PkaType": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Type": { "type": "string" },
+        "Pka": { "type": "number" },
+        "ValueOrigin": { "$ref": "#/definitions/ValueOrigin" }
+      }
+    },
+    "CompoundProcess": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "InternalName": { "type": "string" },
+        "DataSource": { "type": "string" },
+        "Species": { "type": "string" },
+        "Molecule": { "type": "string" },
+        "Metabolite": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      }
+    },
+    "CalculationMethodCache": {
+      "type": "array",
+      "description": "CalculationMethodCache is serialized as a plain array of calculation method names.",
+      "items": { "type": "string" }
+    },
+    "Compound": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "IsSmallMolecule": { "type": ["boolean", "null"] },
+        "PlasmaProteinBindingPartner": { "type": ["string", "null"] },
+        "Lipophilicity": { "type": "array", "items": { "$ref": "#/definitions/Alternative" } },
+        "FractionUnbound": { "type": "array", "items": { "$ref": "#/definitions/Alternative" } },
+        "Solubility": { "type": "array", "items": { "$ref": "#/definitions/Alternative" } },
+        "IntestinalPermeability": { "type": "array", "items": { "$ref": "#/definitions/Alternative" } },
+        "Permeability": { "type": "array", "items": { "$ref": "#/definitions/Alternative" } },
+        "PkaTypes": { "type": "array", "items": { "$ref": "#/definitions/PkaType" } },
+        "Processes": { "type": "array", "items": { "$ref": "#/definitions/CompoundProcess" } },
+        "CalculationMethods": { "$ref": "#/definitions/CalculationMethodCache" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      }
+    },
+    "ExpressionContainer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Value": { "type": ["number", "null"] },
+        "Unit": { "type": "string" },
+        "ValueOrigin": { "$ref": "#/definitions/ValueOrigin" },
+        "TableFormula": { "$ref": "#/definitions/TableFormula" },
+        "MembraneLocation": { "type": ["string", "null"] },
+        "TransportDirection": { "type": ["string", "null"] },
+        "CompartmentName": { "type": "string" }
+      }
+    },
+    "Ontogeny": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Table": { "$ref": "#/definitions/TableFormula" }
+      }
+    },
+    "DiseaseState": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      }
+    },
+    "ExpressionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Type": { "type": "string" },
+        "Species": { "type": "string" },
+        "Molecule": { "type": "string" },
+        "Category": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/LocalizedParameter" } },
+        "MembraneLocation": { "type": ["string", "null"] },
+        "TissueLocation": { "type": ["string", "null"] },
+        "IntracellularVascularEndoLocation": { "type": ["string", "null"] },
+        "Localization": { "type": ["string", "null"] },
+        "TransportType": { "type": ["string", "null"] },
+        "Expression": { "type": "array", "items": { "$ref": "#/definitions/ExpressionContainer" } },
+        "Ontogeny": { "$ref": "#/definitions/Ontogeny" },
+        "Disease": { "$ref": "#/definitions/DiseaseState" }
+      }
+    },
+    "OriginData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "CalculationMethods": { "$ref": "#/definitions/CalculationMethodCache" },
+        "Species": { "type": "string" },
+        "Population": { "type": "string" },
+        "Gender": { "type": "string" },
+        "Age": { "$ref": "#/definitions/Parameter" },
+        "GestationalAge": { "$ref": "#/definitions/Parameter" },
+        "Weight": { "$ref": "#/definitions/Parameter" },
+        "Height": { "$ref": "#/definitions/Parameter" },
+        "ValueOrigin": { "$ref": "#/definitions/ValueOrigin" },
+        "Disease": { "$ref": "#/definitions/DiseaseState" },
+        "DiseaseState": { "type": "string" },
+        "DiseaseStateParameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      }
+    },
+    "Individual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Seed": { "type": ["integer", "null"] },
+        "OriginData": { "$ref": "#/definitions/OriginData" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/LocalizedParameter" } },
+        "Molecules": { "type": "array", "items": { "$ref": "#/definitions/ExpressionProfile" } },
+        "ExpressionProfiles": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "ParameterRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Min": { "type": ["number", "null"] },
+        "Max": { "type": ["number", "null"] },
+        "Unit": { "type": "string" }
+      }
+    },
+    "PopulationSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "NumberOfIndividuals": { "type": "integer" },
+        "ProportionOfFemales": { "type": ["integer", "null"] },
+        "Age": { "$ref": "#/definitions/ParameterRange" },
+        "Weight": { "$ref": "#/definitions/ParameterRange" },
+        "Height": { "$ref": "#/definitions/ParameterRange" },
+        "GestationalAge": { "$ref": "#/definitions/ParameterRange" },
+        "BMI": { "$ref": "#/definitions/ParameterRange" },
+        "DiseaseStateParameters": { "type": "array", "items": { "$ref": "#/definitions/ParameterRange" } },
+        "Individual": { "$ref": "#/definitions/Individual" }
+      }
+    },
+    "AdvancedParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } },
+        "Seed": { "type": "integer" },
+        "DistributionType": { "type": "string" }
+      }
+    },
+    "Population": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Seed": { "type": ["integer", "null"] },
+        "Settings": { "$ref": "#/definitions/PopulationSettings" },
+        "AdvancedParameters": { "type": "array", "items": { "$ref": "#/definitions/AdvancedParameter" } }
+      }
+    },
+    "Formulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "FormulationType": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      }
+    },
+    "SchemaItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } },
+        "ApplicationType": { "type": "string" },
+        "FormulationKey": { "type": "string" },
+        "TargetOrgan": { "type": "string" },
+        "TargetCompartment": { "type": "string" }
+      }
+    },
+    "Schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } },
+        "SchemaItems": { "type": "array", "items": { "$ref": "#/definitions/SchemaItem" } }
+      }
+    },
+    "Protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } },
+        "ApplicationType": { "type": "string" },
+        "DosingInterval": { "type": "string" },
+        "TargetOrgan": { "type": "string" },
+        "TargetCompartment": { "type": "string" },
+        "Schemas": { "type": "array", "items": { "$ref": "#/definitions/Schema" } },
+        "TimeUnit": { "type": "string" }
+      }
+    },
+    "Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } },
+        "Template": { "type": "string" }
+      }
+    },
+    "DescriptorCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Tag": { "type": "string" },
+        "Type": { "type": "string" }
+      }
+    },
+    "FormulaUsablePath": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Alias": { "type": "string" },
+        "Dimension": { "type": "string" },
+        "Path": { "type": "string" }
+      }
+    },
+    "ExplicitFormula": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Formula": { "type": "string" },
+        "References": { "type": "array", "items": { "$ref": "#/definitions/FormulaUsablePath" } },
+        "Dimension": { "type": "string" }
+      }
+    },
+    "MoleculeList": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ForAll": { "type": "boolean" },
+        "MoleculeNamesToInclude": { "type": "array", "items": { "type": "string" } },
+        "MoleculeNamesToExclude": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "Observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Dimension": { "type": "string" },
+        "ContainerCriteria": { "type": "array", "items": { "$ref": "#/definitions/DescriptorCondition" } },
+        "Formula": { "$ref": "#/definitions/ExplicitFormula" },
+        "MoleculeList": { "$ref": "#/definitions/MoleculeList" },
+        "Type": { "type": "string" }
+      }
+    },
+    "ObserverSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Observers": { "type": "array", "items": { "$ref": "#/definitions/Observer" } }
+      }
+    },
+    "CompoundGroupSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "AlternativeName": { "type": "string" },
+        "GroupName": { "type": "string" }
+      }
+    },
+    "FormulationSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Key": { "type": "string" }
+      }
+    },
+    "ProtocolSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Formulations": { "type": "array", "items": { "$ref": "#/definitions/FormulationSelection" } }
+      }
+    },
+    "CompoundProcessSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "MoleculeName": { "type": "string" },
+        "MetaboliteName": { "type": "string" },
+        "CompoundName": { "type": "string" },
+        "SystemicProcessType": { "type": "string" }
+      }
+    },
+    "CompoundProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "CalculationMethods": { "$ref": "#/definitions/CalculationMethodCache" },
+        "Alternatives": { "type": "array", "items": { "$ref": "#/definitions/CompoundGroupSelection" } },
+        "Processes": { "type": "array", "items": { "$ref": "#/definitions/CompoundProcessSelection" } },
+        "Protocol": { "$ref": "#/definitions/ProtocolSelection" }
+      }
+    },
+    "EventSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "StartTime": { "$ref": "#/definitions/Parameter" }
+      }
+    },
+    "ObserverSetSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" }
+      }
+    },
+    "AlteredBuildingBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Type": { "type": "string" }
+      }
+    },
+    "SolverSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "AbsTol": { "type": ["number", "null"] },
+        "RelTol": { "type": ["number", "null"] },
+        "UseJacobian": { "type": ["boolean", "null"] },
+        "H0": { "type": ["number", "null"] },
+        "HMin": { "type": ["number", "null"] },
+        "HMax": { "type": ["number", "null"] },
+        "MxStep": { "type": ["integer", "null"] }
+      }
+    },
+    "OutputInterval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      }
+    },
+    "OutputSchema": {
+      "type": "array",
+      "description": "OutputSchema is serialized as a plain array of OutputInterval.",
+      "items": { "$ref": "#/definitions/OutputInterval" }
+    },
+    "OutputSelections": {
+      "type": "array",
+      "description": "OutputSelections is serialized as a plain array of output path strings.",
+      "items": { "type": "string" }
+    },
+    "OutputMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Scaling": { "type": "string" },
+        "Weight": { "type": ["number", "null"] },
+        "Path": { "type": "string" },
+        "ObservedData": { "type": "string" },
+        "Weights": { "type": "array", "items": { "$ref": "#/definitions/FloatValue" } }
+      }
+    },
+    "CurveOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Visible": { "type": ["boolean", "null"] },
+        "ShouldShowLLOQ": { "type": ["boolean", "null"] },
+        "VisibleInLegend": { "type": ["boolean", "null"] },
+        "InterpolationMode": { "type": ["string", "null"] },
+        "Color": { "$ref": "#/definitions/Color" },
+        "LegendIndex": { "type": ["integer", "null"] },
+        "LineThickness": { "type": ["integer", "null"] },
+        "LineStyle": { "type": ["string", "null"] },
+        "Symbol": { "type": ["string", "null"] },
+        "yAxisType": { "type": ["string", "null"] }
+      }
+    },
+    "Curve": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "X": { "type": "string" },
+        "Y": { "type": "string" },
+        "CurveOptions": { "$ref": "#/definitions/CurveOptions" }
+      }
+    },
+    "Axis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Unit": { "type": "string" },
+        "Dimension": { "type": "string" },
+        "Caption": { "type": "string" },
+        "Type": { "type": "string" },
+        "GridLines": { "type": "boolean" },
+        "Visible": { "type": "boolean" },
+        "Min": { "type": ["number", "null"] },
+        "Max": { "type": ["number", "null"] },
+        "DefaultColor": { "$ref": "#/definitions/Color" },
+        "DefaultLineStyle": { "type": "string" },
+        "Scaling": { "type": "string" },
+        "NumberMode": { "type": "string" }
+      }
+    },
+    "ChartFonts": {
+      "type": "object",
+      "description": "OSPSuite ChartFonts settings.",
+      "additionalProperties": true,
+      "properties": {
+        "FontFamilyName": { "type": "string" },
+        "AxisSize": { "type": "integer" },
+        "LegendSize": { "type": "integer" },
+        "OriginSize": { "type": "integer" },
+        "TitleSize": { "type": "integer" },
+        "DescriptionSize": { "type": "integer" },
+        "WatermarkSize": { "type": "integer" }
+      }
+    },
+    "ChartFontAndSizeSettings": {
+      "type": "object",
+      "description": "OSPSuite ChartFontAndSizeSettings.",
+      "additionalProperties": true,
+      "properties": {
+        "Fonts": { "$ref": "#/definitions/ChartFonts" },
+        "ChartWidth": { "type": "number" },
+        "ChartHeight": { "type": "number" }
+      }
+    },
+    "ChartSettings": {
+      "type": "object",
+      "description": "OSPSuite ChartSettings.",
+      "additionalProperties": true,
+      "properties": {
+        "BackColor": { "$ref": "#/definitions/Color" },
+        "DiagramBackColor": { "$ref": "#/definitions/Color" },
+        "LegendPosition": { "type": "string" },
+        "SideMarginsEnabled": { "type": "boolean" }
+      }
+    },
+    "CurveChart": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "FontAndSize": { "$ref": "#/definitions/ChartFontAndSizeSettings" },
+        "Settings": { "$ref": "#/definitions/ChartSettings" },
+        "Title": { "type": "string" },
+        "OriginText": { "type": "string" },
+        "IncludeOriginData": { "type": ["boolean", "null"] },
+        "PreviewSettings": { "type": ["boolean", "null"] },
+        "Axes": { "type": "array", "items": { "$ref": "#/definitions/Axis" } },
+        "Curves": { "type": "array", "items": { "$ref": "#/definitions/Curve" } }
+      }
+    },
+    "GroupingItem": {
+      "type": "object",
+      "description": "OSPSuite population analysis GroupingItem.",
+      "additionalProperties": true,
+      "properties": {
+        "Label": { "type": "string" },
+        "Color": { "$ref": "#/definitions/Color" },
+        "Symbol": { "type": "string" }
+      }
+    },
+    "GroupingDefinition": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "FieldName": { "type": "string" },
+        "Mapping": { "type": "object" },
+        "Dimension": { "type": "string" },
+        "Unit": { "type": "string" },
+        "Items": { "type": "array", "items": { "$ref": "#/definitions/GroupingItem" } },
+        "Limits": { "type": "array", "items": { "type": "number" } },
+        "NumberOfBins": { "type": ["integer", "null"] },
+        "StartColor": { "$ref": "#/definitions/Color" },
+        "EndColor": { "$ref": "#/definitions/Color" },
+        "NamingPattern": { "type": "string" },
+        "Strategy": { "type": ["string", "null"] }
+      }
+    },
+    "ObservedDataCurveOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Caption": { "type": "string" },
+        "Path": { "type": "string" },
+        "CurveOptions": { "$ref": "#/definitions/CurveOptions" }
+      }
+    },
+    "ObservedDataCollection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ObservedData": { "type": "array", "items": { "type": "string" } },
+        "ApplyGrouping": { "type": "boolean" },
+        "CurveOptions": { "type": "array", "items": { "$ref": "#/definitions/ObservedDataCurveOptions" } }
+      }
+    },
+    "StatisticalAggregation": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "Id": { "type": "string" },
+        "LineStyle": { "type": "string" }
+      },
+      "required": ["Id"]
+    },
+    "PopulationAnalysisField": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Dimension": { "type": "string" },
+        "Scaling": { "type": ["string", "null"] },
+        "Unit": { "type": "string" },
+        "QuantityPath": { "type": "string" },
+        "QuantityType": { "type": ["string", "null"] },
+        "Color": { "$ref": "#/definitions/Color" },
+        "ParameterPath": { "type": "string" },
+        "PKParameter": { "type": "string" },
+        "Covariate": { "type": "string" },
+        "GroupingItems": { "type": "array", "items": { "$ref": "#/definitions/GroupingItem" } },
+        "GroupingDefinition": { "$ref": "#/definitions/GroupingDefinition" },
+        "Area": { "type": ["string", "null"] },
+        "Index": { "type": ["integer", "null"] }
+      }
+    },
+    "PopulationAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Fields": { "type": "array", "items": { "$ref": "#/definitions/PopulationAnalysisField" } },
+        "Statistics": { "type": "array", "items": { "$ref": "#/definitions/StatisticalAggregation" } },
+        "ShowOutliers": { "type": ["boolean", "null"] }
+      }
+    },
+    "AxisSettings": {
+      "type": "object",
+      "description": "OSPSuite population analysis chart AxisSettings.",
+      "additionalProperties": true
+    },
+    "PopulationAnalysisChart": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "FontAndSize": { "$ref": "#/definitions/ChartFontAndSizeSettings" },
+        "Settings": { "$ref": "#/definitions/ChartSettings" },
+        "Title": { "type": "string" },
+        "OriginText": { "type": "string" },
+        "IncludeOriginData": { "type": ["boolean", "null"] },
+        "PreviewSettings": { "type": ["boolean", "null"] },
+        "Type": { "type": "string" },
+        "Analysis": { "$ref": "#/definitions/PopulationAnalysis" },
+        "ObservedDataCollection": { "$ref": "#/definitions/ObservedDataCollection" },
+        "XAxisSettings": { "$ref": "#/definitions/AxisSettings" },
+        "YAxisSettings": { "$ref": "#/definitions/AxisSettings" },
+        "SecondaryYAxisSettings": { "type": "array", "items": { "$ref": "#/definitions/AxisSettings" } }
+      }
+    },
+    "Simulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Model": { "type": "string" },
+        "AllowAging": { "type": ["boolean", "null"] },
+        "ObservedData": { "type": "array", "items": { "type": "string" } },
+        "Solver": { "$ref": "#/definitions/SolverSettings" },
+        "OutputSchema": { "$ref": "#/definitions/OutputSchema" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/LocalizedParameter" } },
+        "OutputSelections": { "$ref": "#/definitions/OutputSelections" },
+        "OutputMappings": { "type": "array", "items": { "$ref": "#/definitions/OutputMapping" } },
+        "Individual": { "type": "string" },
+        "Population": { "type": "string" },
+        "Compounds": { "type": "array", "items": { "$ref": "#/definitions/CompoundProperties" } },
+        "Events": { "type": "array", "items": { "$ref": "#/definitions/EventSelection" } },
+        "ObserverSets": { "type": "array", "items": { "$ref": "#/definitions/ObserverSetSelection" } },
+        "AdvancedParameters": { "type": "array", "items": { "$ref": "#/definitions/AdvancedParameter" } },
+        "HasResults": { "type": "boolean" },
+        "AlteredBuildingBlocks": { "type": "array", "items": { "$ref": "#/definitions/AlteredBuildingBlock" } },
+        "IndividualAnalyses": { "type": "array", "items": { "$ref": "#/definitions/CurveChart" } },
+        "PopulationAnalyses": { "type": "array", "items": { "$ref": "#/definitions/PopulationAnalysisChart" } },
+        "Interactions": { "type": "array", "items": { "$ref": "#/definitions/CompoundProcessSelection" } }
+      }
+    },
+    "QuantityInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Path": { "type": "string" },
+        "Type": { "type": ["string", "null"] },
+        "OrderIndex": { "type": ["integer", "null"] }
+      }
+    },
+    "ExtendedProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Value": {},
+        "ListOfValues": { "type": "array" },
+        "FullName": { "type": "string" },
+        "ReadOnly": { "type": ["boolean", "null"] },
+        "Type": { "type": ["string", "null"] }
+      }
+    },
+    "DataInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Origin": { "type": ["string", "null"] },
+        "AuxiliaryType": { "type": "string" },
+        "Category": { "type": "string" },
+        "MolWeight": { "type": ["number", "null"] },
+        "ExtendedProperties": { "type": "array", "items": { "$ref": "#/definitions/ExtendedProperty" } },
+        "LLOQ": { "type": ["number", "null"] },
+        "ComparisonThreshold": { "type": ["number", "null"] }
+      }
+    },
+    "DataColumn": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "RelatedColumns": { "type": "array", "items": { "$ref": "#/definitions/DataColumn" } },
+        "QuantityInfo": { "$ref": "#/definitions/QuantityInfo" },
+        "DataInfo": { "$ref": "#/definitions/DataInfo" },
+        "Values": { "type": "array", "items": { "$ref": "#/definitions/FloatValue" } },
+        "Dimension": { "type": "string" },
+        "Unit": { "type": "string" }
+      }
+    },
+    "DataRepository": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "ExtendedProperties": { "type": "array", "items": { "$ref": "#/definitions/ExtendedProperty" } },
+        "Columns": { "type": "array", "items": { "$ref": "#/definitions/DataColumn" } },
+        "BaseGrid": { "$ref": "#/definitions/DataColumn" }
+      }
+    },
+    "OptimizationAlgorithm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Properties": { "type": "array", "items": { "$ref": "#/definitions/ExtendedProperty" } }
+      }
+    },
+    "ParameterIdentificationRunMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "NumberOfRuns": { "type": ["integer", "null"] },
+        "AllTheSameSelection": { "$ref": "#/definitions/CalculationMethodCache" },
+        "CalculationMethods": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/CalculationMethodCache" }
+        }
+      }
+    },
+    "ParameterIdentificationConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "LLOQMode": { "type": "string" },
+        "RemoveLLOQMode": { "type": "string" },
+        "CalculateJacobian": { "type": "boolean" },
+        "Algorithm": { "$ref": "#/definitions/OptimizationAlgorithm" },
+        "RunMode": { "$ref": "#/definitions/ParameterIdentificationRunMode" }
+      }
+    },
+    "IdentificationParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } },
+        "Scaling": { "type": "string" },
+        "UseAsFactor": { "type": ["boolean", "null"] },
+        "IsFixed": { "type": ["boolean", "null"] },
+        "LinkedParameters": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "ParameterIdentificationAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Type": { "type": "string" },
+        "Chart": { "$ref": "#/definitions/CurveChart" },
+        "DataRepositories": { "type": "array", "items": { "$ref": "#/definitions/DataRepository" } }
+      }
+    },
+    "ParameterIdentification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Simulations": { "type": "array", "items": { "type": "string" } },
+        "Configuration": { "$ref": "#/definitions/ParameterIdentificationConfiguration" },
+        "OutputMappings": { "type": "array", "items": { "$ref": "#/definitions/OutputMapping" } },
+        "IdentificationParameters": { "type": "array", "items": { "$ref": "#/definitions/IdentificationParameter" } },
+        "Analyses": { "type": "array", "items": { "$ref": "#/definitions/ParameterIdentificationAnalysis" } }
+      }
+    },
+    "SimulationComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Simulations": { "type": "array", "items": { "type": "string" } },
+        "IndividualComparison": { "$ref": "#/definitions/CurveChart" },
+        "PopulationComparisons": { "type": "array", "items": { "$ref": "#/definitions/PopulationAnalysisChart" } },
+        "ReferenceGroupingItem": { "$ref": "#/definitions/GroupingItem" },
+        "ReferenceSimulation": { "type": "string" }
+      }
+    },
+    "QualificationStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Type": { "type": "string" },
+        "Subject": { "type": "string" }
+      }
+    },
+    "QualificationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Steps": { "type": "array", "items": { "$ref": "#/definitions/QualificationStep" } }
+      }
+    },
+    "Classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "Classifiables": { "type": "array", "items": { "type": "string" } },
+        "Classifications": { "type": "array", "items": { "$ref": "#/definitions/Classification" } }
+      }
+    },
+    "Project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Version"],
+      "properties": {
+        "Version": { "type": "integer" },
+        "Name": { "type": "string" },
+        "Description": { "type": "string" },
+        "ExpressionProfiles": { "type": "array", "items": { "$ref": "#/definitions/ExpressionProfile" } },
+        "Individuals": { "type": "array", "items": { "$ref": "#/definitions/Individual" } },
+        "Populations": { "type": "array", "items": { "$ref": "#/definitions/Population" } },
+        "Compounds": { "type": "array", "items": { "$ref": "#/definitions/Compound" } },
+        "Formulations": { "type": "array", "items": { "$ref": "#/definitions/Formulation" } },
+        "Protocols": { "type": "array", "items": { "$ref": "#/definitions/Protocol" } },
+        "ObserverSets": { "type": "array", "items": { "$ref": "#/definitions/ObserverSet" } },
+        "Events": { "type": "array", "items": { "$ref": "#/definitions/Event" } },
+        "Simulations": { "type": "array", "items": { "$ref": "#/definitions/Simulation" } },
+        "ParameterIdentifications": { "type": "array", "items": { "$ref": "#/definitions/ParameterIdentification" } },
+        "ObservedData": { "type": "array", "items": { "$ref": "#/definitions/DataRepository" } },
+        "SimulationComparisons": { "type": "array", "items": { "$ref": "#/definitions/SimulationComparison" } },
+        "QualificationPlans": { "type": "array", "items": { "$ref": "#/definitions/QualificationPlan" } },
+        "ObservedDataClassifications": { "type": "array", "items": { "$ref": "#/definitions/Classification" } },
+        "SimulationComparisonClassifications": { "type": "array", "items": { "$ref": "#/definitions/Classification" } },
+        "SimulationClassifications": { "type": "array", "items": { "$ref": "#/definitions/Classification" } },
+        "ParameterIdentificationClassifications": { "type": "array", "items": { "$ref": "#/definitions/Classification" } },
+        "QualificationPlanClassifications": { "type": "array", "items": { "$ref": "#/definitions/Classification" } }
+      }
+    }
+  }
+}
