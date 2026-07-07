@@ -19,7 +19,11 @@ These follow `PKSimJsonSerializerSettings`:
 
 - `NullValueHandling.Ignore` &mdash; `null` properties are omitted, so no property other
   than `Project.Version` is required.
-- `StringEnumConverter` &mdash; enum values are written as strings.
+- `StringEnumConverter` &mdash; enum values are written as strings. Every property whose
+  underlying type is an enum is restricted to its allowed values in the schema: simple
+  enums use an `"enum"` list, while `[Flags]` enums (e.g. `Localization`, `TransportType`,
+  `QuantityType`, `PivotArea`, `PKSimBuildingBlockType`) use a `"pattern"` that accepts a
+  single value or a comma-separated combination of the valid member names.
 - `ColorConverter` &mdash; `System.Drawing.Color` values are written as hex strings
   (`#RRGGBB`, or `#AARRGGBB` when an alpha channel is present).
 - `WritablePropertiesOnlyResolver` &mdash; only writable members are serialized.
