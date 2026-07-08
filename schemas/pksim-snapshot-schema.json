@@ -42,6 +42,7 @@
     "LocalizedParameter": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Path"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -55,6 +56,7 @@
     "Point": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["X", "Y"],
       "properties": {
         "X": { "type": "number" },
         "Y": { "type": "number" },
@@ -103,6 +105,7 @@
     "PkaType": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Type", "Pka"],
       "properties": {
         "Type": { "type": "string", "enum": ["Acid", "Base", "Neutral"] },
         "Pka": { "type": "number" },
@@ -112,6 +115,7 @@
     "CompoundProcess": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["InternalName", "DataSource"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -182,6 +186,7 @@
     "ExpressionProfile": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Type", "Species", "Molecule", "Category"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -203,6 +208,7 @@
     "OriginData": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Species"],
       "properties": {
         "CalculationMethods": { "$ref": "#/definitions/CalculationMethodCache" },
         "Species": { "type": "string" },
@@ -244,6 +250,7 @@
     "PopulationSettings": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["NumberOfIndividuals", "Individual"],
       "properties": {
         "NumberOfIndividuals": { "type": "integer" },
         "ProportionOfFemales": { "type": ["integer", "null"] },
@@ -270,6 +277,7 @@
     "Population": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Settings"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -281,6 +289,7 @@
     "Formulation": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["FormulationType"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -291,6 +300,7 @@
     "SchemaItem": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["ApplicationType"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -329,6 +339,7 @@
     "Event": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Template"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -406,6 +417,7 @@
     "FormulationSelection": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Name", "Key"],
       "properties": {
         "Name": { "type": "string" },
         "Key": { "type": "string" }
@@ -414,6 +426,7 @@
     "ProtocolSelection": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Name"],
       "properties": {
         "Name": { "type": "string" },
         "Formulations": { "type": "array", "items": { "$ref": "#/definitions/FormulationSelection" } }
@@ -433,6 +446,7 @@
     "CompoundProperties": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Name"],
       "properties": {
         "Name": { "type": "string" },
         "CalculationMethods": { "$ref": "#/definitions/CalculationMethodCache" },
@@ -444,6 +458,7 @@
     "EventSelection": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["StartTime"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -617,6 +632,7 @@
     "GroupingDefinition": {
       "type": "object",
       "additionalProperties": true,
+      "required": ["FieldName"],
       "properties": {
         "FieldName": { "type": "string" },
         "Mapping": { "type": "object" },
@@ -716,6 +732,7 @@
     "Simulation": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Model"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },
@@ -850,6 +867,7 @@
     "ParameterIdentificationAnalysis": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["Type"],
       "properties": {
         "Name": { "type": "string" },
         "Description": { "type": "string" },

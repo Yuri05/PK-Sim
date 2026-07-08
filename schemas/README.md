@@ -17,8 +17,11 @@ The root object of a snapshot file is `Project`.
 
 These follow `PKSimJsonSerializerSettings`:
 
-- `NullValueHandling.Ignore` &mdash; `null` properties are omitted, so no property other
-  than `Project.Version` is required.
+- `NullValueHandling.Ignore` &mdash; `null` properties are omitted. Properties are only
+  marked as `required` in the schema when the corresponding snapshot property carries the
+  `[Required]` data-annotation attribute (e.g. `Project.Version`, `Point.X`/`Point.Y`,
+  `ExpressionProfile.Type`/`Species`/`Molecule`/`Category`); all other properties are
+  optional.
 - `StringEnumConverter` &mdash; enum values are written as strings. Every property whose
   underlying type is an enum is restricted to its allowed values in the schema: simple
   enums use an `"enum"` list, while `[Flags]` enums (e.g. `Localization`, `TransportType`,
