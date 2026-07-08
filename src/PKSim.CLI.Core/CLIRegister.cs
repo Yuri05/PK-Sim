@@ -23,6 +23,8 @@ namespace PKSim.CLI.Core
          //special registration that does not follow conventions
          container.Register<IBatchRunner<ExportRunOptions>, ExportSimulationRunner>();
          container.Register<IBatchRunner<DownloadModelsRunOptions>, ModelDownloadBatchRunner>();
+         // HttpClient registered as singleton is acceptable for CLI applications that don't require connection pooling management
+         // For server applications, IHttpClientFactory should be used instead
          container.Register<HttpClient>(new HttpClient());
       }
    }

@@ -4,7 +4,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using OSPSuite.Core.Services;
 
 namespace PKSim.CLI.Core.Services
