@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -13,6 +12,7 @@ namespace PKSim.CLI.Core.Services
    public class ModelArchiveDownloader : IModelArchiveDownloader
    {
       private readonly IOSPSuiteLogger _logger;
+      private readonly HttpClient _httpClient;
 
       /// <summary>
       /// List of model URLs to download
@@ -62,9 +62,10 @@ namespace PKSim.CLI.Core.Services
          ("https://raw.githubusercontent.com/Open-Systems-Pharmacology/Warfarin-Model/refs/heads/main/Warfarin-Model.json", "Warfarin-Model.json"),
       };
 
-      public ModelArchiveDownloader(IOSPSuiteLogger logger)
+      public ModelArchiveDownloader(IOSPSuiteLogger logger, HttpClient httpClient)
       {
          _logger = logger;
+         _httpClient = httpClient;
       }
 
       public IEnumerable<(string Url, string FileName)> GetModelUrls()
@@ -84,31 +85,28 @@ namespace PKSim.CLI.Core.Services
             // Create a temporary directory to download files
             _logger.AddInfo($"Downloading {_modelUrls.Count} model files...");
 
-            using (var httpClient = new HttpClient())
+            int downloadedCount = 0;
+            int failedCount = 0;
+
+            foreach (var (url, fileName) in _modelUrls)
             {
-               int downloadedCount = 0;
-               int failedCount = 0;
-
-               foreach (var (url, fileName) in _modelUrls)
+               try
                {
-                  try
-                  {
-                     _logger.AddDebug($"Downloading {fileName} from {url}");
-                     var content = await httpClient.GetByteArrayAsync(url);
-                     var filePath = Path.Combine(tempDirectory, fileName);
-                     await File.WriteAllBytesAsync(filePath, content);
-                     downloadedCount++;
-                     _logger.AddDebug($"Successfully downloaded {fileName}");
-                  }
-                  catch (Exception ex)
-                  {
-                     failedCount++;
-                     _logger.AddWarning($"Failed to download {fileName}: {ex.Message}");
-                  }
+                  _logger.AddDebug($"Downloading {fileName} from {url}");
+                  var content = await _httpClient.GetByteArrayAsync(url);
+                  var filePath = Path.Combine(tempDirectory, fileName);
+                  await File.WriteAllBytesAsync(filePath, content);
+                  downloadedCount++;
+                  _logger.AddDebug($"Successfully downloaded {fileName}");
                }
-
-               _logger.AddInfo($"Downloaded {downloadedCount} files successfully, {failedCount} files failed");
+               catch (Exception ex)
+               {
+                  failedCount++;
+                  _logger.AddWarning($"Failed to download {fileName}: {ex.Message}");
+               }
             }
+
+            _logger.AddInfo($"Downloaded {downloadedCount} files successfully, {failedCount} files failed");
 
             // Create the archive
             _logger.AddInfo($"Creating archive...");

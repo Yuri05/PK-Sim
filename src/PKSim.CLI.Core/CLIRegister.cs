@@ -23,6 +23,7 @@ namespace PKSim.CLI.Core
          //special registration that does not follow conventions
          container.Register<IBatchRunner<ExportRunOptions>, ExportSimulationRunner>();
          container.Register<IBatchRunner<DownloadModelsRunOptions>, ModelDownloadBatchRunner>();
+         container.Register<HttpClient>(new HttpClient());
       }
    }
 }

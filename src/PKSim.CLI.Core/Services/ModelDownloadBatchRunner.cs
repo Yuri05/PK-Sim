@@ -25,7 +25,7 @@ namespace PKSim.CLI.Core.Services
          
          if (string.IsNullOrWhiteSpace(runOptions.OutputFolder))
          {
-            throw new InvalidOperationException("Output folder must be specified");
+            throw new InvalidOperationException($"Output folder must be specified ('{nameof(runOptions.OutputFolder)}' parameter is null or empty)");
          }
 
          var archivePath = System.IO.Path.Combine(runOptions.OutputFolder, "OSP-Models.zip");
