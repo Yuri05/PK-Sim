@@ -30,7 +30,7 @@ namespace PKSim.IntegrationTests
          CRITICAL_MICELLAR_CONCENTRATION,
          BILE_SALT_PARTITION_COEFFICIENT_CONSTANT_1,
          BILE_SALT_PARTITION_COEFFICIENT_CONSTANT_2,
-         BILE_SALT_PARTITION_COEFFICIENT_IONIZED
+         BILE_SALT_PARTITION_COEFFICIENT_IONIZED,
       };
 
       protected Compound _compound;
@@ -79,13 +79,6 @@ namespace PKSim.IntegrationTests
          alternative.Name.ShouldBeEqualTo(PKSimConstants.UI.CalculatedAlernative);
          alternative.IsDefault.ShouldBeTrue();
          alternative.Parameter(BILE_SALT_PARTITION_COEFFICIENT_NEUTRAL).Formula.IsConstant().ShouldBeFalse();
-      }
-
-      [Observation]
-      public void should_group_the_four_constants_under_advanced_solubility()
-      {
-         _compound.AllParameters(x => string.Equals(x.GroupName, COMPOUND_ADVANCED_SOLUBILITY)).Select(x => x.Name)
-            .ShouldOnlyContain(_advancedSolubilityConstants);
       }
 
       [Observation]

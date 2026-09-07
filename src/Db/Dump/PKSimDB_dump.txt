@@ -12327,7 +12327,7 @@ INSERT INTO tab_container_parameters VALUES(1678,'COMPOUND','DRUG','pKa_pH_Intri
 INSERT INTO tab_container_parameters VALUES(1678,'COMPOUND','DRUG','pKa_pH_IntrinsicSolubility_K6',0,1,0,0,'COMPOUND_ADVANCED_SOLUBILITY',1,'GLOBAL','COMPOUND',0,0);
 INSERT INTO tab_container_parameters VALUES(1678,'COMPOUND','DRUG','pKa_pH_IntrinsicSolubility_K7',0,1,0,0,'COMPOUND_ADVANCED_SOLUBILITY',1,'GLOBAL','COMPOUND',0,0);
 INSERT INTO tab_container_parameters VALUES(1678,'COMPOUND','DRUG','pKa_pH_IntrinsicSolubility_K8',0,1,0,0,'COMPOUND_ADVANCED_SOLUBILITY',1,'GLOBAL','COMPOUND',0,0);
-INSERT INTO tab_container_parameters VALUES(1678,'COMPOUND','DRUG','Solubility (intrinsic)',1,0,1,0,'COMPOUND_ADVANCED_SOLUBILITY',4,'GLOBAL','SIMULATION',1,0);
+INSERT INTO tab_container_parameters VALUES(1678,'COMPOUND','DRUG','Solubility (intrinsic)',1,0,1,0,'COMPOUND_ADVANCED_SOLUBILITY',4,'GLOBAL','SIMULATION',0,0);
 INSERT INTO tab_container_parameters VALUES(1678,'COMPOUND','DRUG','IntrinsicSolubility_pKa_pH_Factor',0,1,0,0,'COMPOUND_ADVANCED_SOLUBILITY',1,'GLOBAL','COMPOUND',0,0);
 CREATE TABLE [tab_container_parameter_curves](
   [parameter_value_version] text NOT NULL, 
