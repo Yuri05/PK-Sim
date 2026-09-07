@@ -104,8 +104,6 @@ namespace PKSim
             "VenousBlood_UmbilicalCord"
          ]).ToList().AsReadOnly();
 
-         public const string INTRINSIC_SOLUBILITY = "Intrinsic solubility";
-
       }
 
       public static class Neigborhood
