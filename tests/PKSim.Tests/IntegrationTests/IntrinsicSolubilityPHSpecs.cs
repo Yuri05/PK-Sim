@@ -16,9 +16,9 @@ public abstract class concern_for_pH_intrinsic_solubility : ContextForIntegratio
 {
    private Compound _compound;
 
-   protected override void Context()
+   public override void GlobalContext()
    {
-      base.Context();
+      base.GlobalContext();
       _compound = DomainFactoryForSpecs.CreateStandardCompound();
    }
 
@@ -136,9 +136,9 @@ public class When_creating_a_simulation_with_a_compound : ContextForIntegration<
    private IParameter _solubilityPKaRefPHFactor => _compoundInSimulation.Parameter(CoreConstants.Parameters.SOLUBILITY_PKA_PH_FACTOR);
    private IParameter _solubilityPKaIntrinsicPHFactor => _compoundInSimulation.Parameter(Parameters.INTRINSIC_SOLUBILITY_PKA_PH_FACTOR);
 
-   protected override void Context()
+   public override void GlobalContext()
    {
-      base.Context();
+      base.GlobalContext();
       var individual = DomainFactoryForSpecs.CreateStandardIndividual();
       _compound = DomainFactoryForSpecs.CreateStandardCompound();
       var protocol = DomainFactoryForSpecs.CreateStandardIVBolusProtocol();
